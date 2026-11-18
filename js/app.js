@@ -12,7 +12,7 @@ const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { cons
 let idx = 0, ans = {}, timers = [], rafs = [], runOrder = {}, current = 's-top', lastResult = null;
 const clearRun = () => { timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers = []; rafs.forEach(cancelAnimationFrame); rafs = []; };
 const inProgress = () => current === 's-quiz' && Object.keys(ans).length > 0;
-function resetQuiz() { clearRun(); ans = {}; idx = 0; runOrder = {}; combo = 0; Q.forEach(q => delete q._hyped); $('#combo').classList.remove('on'); }
+function resetQuiz() { clearRun(); ans = {}; idx = 0; runOrder = {}; Q.forEach(q => delete q._fb); }
 
 /* ================= 画面遷移 ================= */
 function show(id) {
@@ -20,7 +20,7 @@ function show(id) {
   current = id;
   $$('.screen').forEach(s => s.classList.toggle('active', s.id === id));
   $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.go === id || (id === 's-result' && b.dataset.go === 's-quiz')));
-  if (id !== 's-quiz') { clearRun(); $('#combo').classList.remove('on'); }
+  if (id !== 's-quiz') { clearRun(); }
   if (id === 's-quiz') render();
   if (id === 's-stats') renderStats();
   window.scrollTo(0, 0);
@@ -46,41 +46,37 @@ document.addEventListener('click', e => {
 $('#logoBtn').onclick = () => guardedGo('s-top');
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); }
 
-/* ================= サウンド ================= */
-let AC = null, muted = false;
-function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
-document.addEventListener('pointerdown', e => { px = e.clientX; py = e.clientY; ac(); }, true);
+/* ================= サウンド（小さめ・やさしい音） ================= */
+let AC = null, MG = null, muted = false;
+function ac() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); MG = AC.createGain(); MG.gain.value = .5; MG.connect(AC.destination); } catch (e) {} }
+  if (AC && AC.state === 'suspended') AC.resume();
+  return AC;
+}
+document.addEventListener('pointerdown', () => ac(), true);
 $('#muteBtn').onclick = () => { muted = !muted; $('#muteBtn').textContent = muted ? '🔇' : '🔊'; };
-function tone(f, d = .12, type = 'sine', vol = .12, slide = 0, at = 0) {
+function tone(f, d = .1, type = 'sine', vol = .05, slide = 0, at = 0) {
   const a = ac(); if (!a || muted) return;
   const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
   o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t + d);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
-  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .02);
-}
-function noise(d = .3, vol = .2, at = 0, freq = 1200) {
-  const a = ac(); if (!a || muted) return;
-  const b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), c = b.getChannelData(0);
-  for (let i = 0; i < c.length; i++) c[i] = (Math.random() * 2 - 1) * (1 - i / c.length);
-  const n = a.createBufferSource(), g = a.createGain(), f = a.createBiquadFilter();
-  f.type = 'lowpass'; f.frequency.value = freq; n.buffer = b; g.gain.value = vol;
-  n.connect(f).connect(g).connect(a.destination); n.start(a.currentTime + at);
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(MG); o.start(t); o.stop(t + d + .02);
 }
 const SND = {
-  pop: c => { const f = 520 * Math.pow(2, Math.min(c, 12) / 12); tone(f, .13, 'triangle', .16, 1.8); tone(f * 1.5, .1, 'sine', .06, 1.5, .05); },
-  slam: () => { tone(90, .45, 'sawtooth', .16, .4); noise(.3, .25); },
-  swoosh: () => noise(.22, .1, 0, 2400),
-  scan: () => { tone(300, .5, 'sine', .07, 4); },
-  fanfare: () => [523, 659, 784, 1047].forEach((f, i) => { tone(f, .38, 'square', .05, 0, i * .11); tone(f / 2, .38, 'triangle', .07, 0, i * .11); }),
-  tick: () => tone(1500, .03, 'square', .04),
-  detent: () => tone(880, .05, 'sine', .08)
+  click: () => tone(660, .08, 'sine', .05),
+  detent: () => tone(520, .05, 'sine', .04),
+  chime: () => { tone(660, .22, 'sine', .05); tone(880, .3, 'sine', .04, 0, .09); },
+  lock: () => tone(196, .2, 'triangle', .07, .6),
+  fanfare: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .35, 'triangle', .04, 0, i * .1)),
+  beep: k => tone(520 + k * 60, .1, 'sine', .04),
+  tick: () => SND.click(), swoosh: () => {}, pop: () => {}, slam: () => SND.lock(), scan: () => {}
 };
 
 /* ================= パーティクル ================= */
 const cv = $('#fx'), cx = cv.getContext('2d'); let parts = [], fxOn = false, px = innerWidth / 2, py = innerHeight / 2;
 function rs() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; cx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0); }
 rs(); addEventListener('resize', rs);
-let COLS = ['#F28C38', '#2FA36B', '#3A7BD5', '#8E5CD9', '#3BD1FF', '#FFD23F'];
+let COLS = ['#F28C38', '#2FA36B', '#3A7BD5', '#8E5CD9', '#F2C94C', '#E5533D'];
 function startLoop() { if (!fxOn) { fxOn = true; requestAnimationFrame(loop); } }
 function burst(x, y, n = 20, pow = 8, grav = .3) { if (RM) return; for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = pow * (.4 + Math.random()); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - pow * .4, g: grav, r: Math.random() * 6, vr: (Math.random() - .5) * .4, s: 3 + Math.random() * 5, c: COLS[i % COLS.length], l: 1, sh: Math.random() < .5 }); } startLoop(); }
 function rain(n = 160, cols) { if (RM) return; const C = cols || COLS; for (let i = 0; i < n; i++) parts.push({ x: Math.random() * innerWidth, y: -20 - Math.random() * innerHeight * .6, vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 4, g: .06, r: 0, vr: (Math.random() - .5) * .3, s: 6 + Math.random() * 7, c: C[i % C.length], l: 1.6, sh: true }); startLoop(); }
@@ -91,20 +87,7 @@ function loop() {
   if (parts.length) requestAnimationFrame(loop); else { fxOn = false; cx.clearRect(0, 0, innerWidth, innerHeight); }
 }
 function shake(el = document.body) { if (RM) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
-function cutin(main, sub = 'NEXT ROLE SCAN') { const c = $('#cutin'); $('#ciMain').textContent = main; $('#ciSub').textContent = sub; c.classList.remove('go'); void c.offsetWidth; c.classList.add('go'); SND.slam(); shake(); }
-
-/* COMBO */
-let combo = 0, qStart = 0;
-function hype(first) {
-  const fast = Date.now() - qStart < 7000;
-  if (first) combo = fast ? combo + 1 : 1;
-  SND.pop(combo); burst(px, py, 10 + Math.min(combo, 10) * 3, 5 + Math.min(combo, 10) * .8);
-  const c = $('#combo');
-  if (combo >= 3) {
-    c.textContent = combo + ' COMBO!'; c.classList.add('on'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop');
-    if (first && combo % 5 === 0) { shake(); tone(880, .3, 'square', .06, 2); }
-  } else c.classList.remove('on');
-}
+function cutin(main, sub = '') { const c = $('#cutin'); $('#ciMain').textContent = main; $('#ciSub').textContent = sub; c.classList.remove('go'); void c.offsetWidth; c.classList.add('go'); SND.chime(); }
 
 /* ================= 回答 ================= */
 function setAns(q, score, raw, fx = true) {
@@ -113,7 +96,7 @@ function setAns(q, score, raw, fx = true) {
   const same = !first && ans[q.id].score === s && JSON.stringify(ans[q.id].raw) === JSON.stringify(raw);
   ans[q.id] = { score: s, raw };
   $('#nextBtn').disabled = false; updateHint(q);
-  if (fx && !same) hype(first);
+  if (fx && !same) SND.click();
 }
 function unset(q) { delete ans[q.id]; $('#nextBtn').disabled = true; updateHint(q); }
 
@@ -134,7 +117,7 @@ function dirText(q) {
     bonus: '基本：−3＋6×(A−B)/10500。合計3万円かつ|A−B|≦2000なら理由で −1／−3',
     line: 'T系＋1・F系−1。結論が1通目＋1／2通目0／3通目−1。合計±3',
     seat: '横：通路＋2／真ん中−1／窓−2（翼の上の窓は−1.5）＋前後：1列目＋1〜10列目−1。±3に収める。どこでもいい＝−1、時間切れ＝0',
-    swipe: 'カード1・3＝J（アリで＋1）、カード2＝P（アリで−1）。時間切れ0。1枚5秒'
+    swipe: '5枚・1枚5秒。J側のカード3枚はアリで＋1、P側の2枚はアリで−1.5。合計を÷2して±3（全部アリでも全部イマイチでも0になる）。時間切れ0'
   }[q.type];
 }
 function updateHint(q) {
@@ -146,9 +129,9 @@ function updateHint(q) {
 function render() {
   clearRun();
   const q = Q[idx], a = AXES[q.axis];
-  $('#pbar').style.width = (idx / Q.length * 100) + '%';
+  $('#pbar').style.width = (idx / Q.length * 100) + '%'; $('#pbar').style.background = a.color;
   $('#pnum').textContent = `${idx + 1} / ${Q.length}`;
-  $('#pstage').innerHTML = q.special ? '<span class="stage sp">SPECIAL STAGE</span>' : '<span class="stage">STANDARD</span>';
+  $('#pstage').innerHTML = q.special ? '<span class="stage sp">ちょっと変わった問題</span>' : '';
   const c = $('#qcard');
   c.innerHTML = `<div class="qhead"><span class="chip dev" style="background:${a.color}">${q.axis}</span>${q.special ? `<span class="chip sp">◆ ${q.special}</span>` : ''}</div><p class="qtext"></p><div id="qbody"></div><div class="devhint" id="devhint"></div>`;
   c.querySelector('.qtext').textContent = q.text;
@@ -156,8 +139,8 @@ function render() {
   $('#nextBtn').disabled = !ans[q.id];
   $('#nextBtn').textContent = idx === Q.length - 1 ? '結果を見る' : '次へ';
   R[q.type](q, $('#qbody'));
-  updateHint(q); qStart = Date.now();
-  c.classList.remove('enter'); void c.offsetWidth; c.classList.add('enter'); SND.swoosh();
+  updateHint(q);
+  c.classList.remove('enter'); void c.offsetWidth; c.classList.add('enter');
 }
 
 function nScale(el, q) {
@@ -170,7 +153,7 @@ function nScale(el, q) {
   sizes.forEach((s, i) => {
     const b = document.createElement('button'); b.className = 'circ' + (prev === i ? ' on' : '');
     const col = i > mid ? 'var(--agree)' : i < mid ? 'var(--disagree)' : '#AEB5C6';
-    b.style.cssText = `width:${s}px;height:${s}px;border-color:${col};color:${col};background:${prev === i ? col : '#fff'}`;
+    b.style.cssText = `--s:${s}px;border-color:${col};color:${col};background:${prev === i ? col : '#fff'}`;
     b.setAttribute('aria-label', `${n}段階中${i + 1}`);
     b.onclick = () => { box.querySelectorAll('.circ').forEach(x => { x.style.background = '#fff'; x.classList.remove('on'); }); b.style.background = col; b.classList.add('on'); b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit'); setAns(q, vals[i] * q.dir, i); };
     box.appendChild(b);
@@ -178,9 +161,52 @@ function nScale(el, q) {
 }
 
 function focusIntro(el, title, msg, onStart) {
-  el.innerHTML = `<div class="focus-intro"><div class="fi-t">READY?</div><b style="font-size:18px">${title}</b><p>${msg}</p><button class="btn glow">スタート</button></div>`;
+  el.innerHTML = `<div class="focus-intro"><div class="fi-t">${title}</div><p>${msg}</p><button class="btn main">スタート</button></div>`;
   el.querySelector('.btn').onclick = onStart;
 }
+
+/* ===== スワイプ問題のカード（イラスト付き） ===== */
+const SVGH = (bg, body, label) => `<svg class="pic" viewBox="0 0 300 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}" font-family="'Zen Maru Gothic',sans-serif"><rect width="300" height="130" fill="${bg}"/>${body}</svg>`;
+const SWIPE_CARDS = [
+  { p: 1, who: 'ゆうき', t: '来月の連休、分刻みでおいしい店と観光地を巡る完璧な旅のしおり作ったよ！',
+    svg: SVGH('#FFF1D4', `<circle cx="266" cy="26" r="24" fill="#FFE29A"/>
+      <g transform="rotate(-4 92 70)"><rect x="28" y="12" width="126" height="108" rx="8" fill="#fff" stroke="#E6C27A" stroke-width="2"/>
+      <path d="M28 20a8 8 0 0 1 8-8h110a8 8 0 0 1 8 8v12H28z" fill="#F2A33A"/>
+      <text x="91" y="28" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">旅のしおり</text>
+      <g font-size="10" fill="#6B4A12" font-weight="700"><text x="38" y="52">9:00 那覇空港</text><text x="38" y="70">11:00 美ら海</text><text x="38" y="88">13:00 ランチ</text><text x="38" y="106">15:30 古宇利島</text></g>
+      <g fill="none" stroke="#2FA36B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M132 47l3 3 6-7"/><path d="M132 65l3 3 6-7"/><path d="M132 83l3 3 6-7"/></g></g>
+      <path d="M180 108C196 62 222 116 246 76S272 44 284 58" fill="none" stroke="#E5533D" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/>
+      <circle cx="180" cy="108" r="6" fill="#E5533D"/><circle cx="246" cy="76" r="5" fill="#E5533D"/><path d="M286 56V34l16 6-16 6" fill="#2FA36B"/>`, '分刻みの旅のしおり') },
+  { p: -1.5, who: 'まお', t: '今日の夜、急に予定空いたからノープランでドライブ行かない？',
+    svg: SVGH('#243460', `<rect y="80" width="300" height="50" fill="#2B3A6E"/>
+      <g fill="#fff"><circle cx="30" cy="20" r="1.6"/><circle cx="70" cy="40" r="1.2"/><circle cx="110" cy="16" r="1.8"/><circle cx="170" cy="30" r="1.3"/><circle cx="205" cy="14" r="1.6"/><circle cx="130" cy="52" r="1.1"/><circle cx="50" cy="62" r="1.4"/></g>
+      <circle cx="246" cy="32" r="15" fill="#FFF0B8"/><circle cx="253" cy="27" r="13" fill="#243460"/>
+      <path d="M0 84Q40 66 84 84T170 82T260 80T300 84V90H0Z" fill="#161F44"/>
+      <polygon points="30,130 270,130 168,86 132,86" fill="#3A3F52"/><path d="M150 130V86" stroke="#FFD86B" stroke-width="3" stroke-dasharray="9 8"/>
+      <g><rect x="116" y="96" width="68" height="26" rx="9" fill="#E5533D"/><path d="M127 96l7-12h32l7 12z" fill="#C93F2B"/><rect x="136" y="88" width="28" height="8" rx="2" fill="#BFD8F5"/>
+      <rect x="121" y="104" width="12" height="6" rx="2" fill="#FFE3A3"/><rect x="167" y="104" width="12" height="6" rx="2" fill="#FFE3A3"/><circle cx="128" cy="123" r="5" fill="#222"/><circle cx="172" cy="123" r="5" fill="#222"/></g>`, '夜のドライブ') },
+  { p: 1, who: 'ゆうき', t: '気になってたお店、1ヶ月前から予約してコースも全部決めておいたよ！',
+    svg: SVGH('#FCE6EC', `<g><rect x="24" y="14" width="104" height="102" rx="10" fill="#fff" stroke="#E7B7C4" stroke-width="2"/>
+      <path d="M24 24a10 10 0 0 1 10-10h84a10 10 0 0 1 10 10v14H24z" fill="#E5533D"/><circle cx="52" cy="14" r="4" fill="#fff"/><circle cx="100" cy="14" r="4" fill="#fff"/>
+      <text x="76" y="32" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">1ヶ月前</text>
+      <circle cx="76" cy="70" r="19" fill="#2FA36B"/><path d="M66 70l7 7 13-14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="76" y="108" font-size="11" font-weight="700" fill="#8A3A4E" text-anchor="middle">予約ずみ</text></g>
+      <circle cx="216" cy="82" r="32" fill="#fff" stroke="#E7B7C4" stroke-width="2"/><circle cx="216" cy="82" r="21" fill="#FFF5F8" stroke="#F0CFD8"/>
+      <rect x="170" y="62" width="3" height="40" rx="1.5" fill="#B9B2B8"/><rect x="260" y="62" width="3" height="40" rx="1.5" fill="#B9B2B8"/>
+      <rect x="205" y="24" width="22" height="8" rx="2" fill="#F6E7C8"/><rect x="214" y="14" width="4" height="10" fill="#8A6A3A"/><path d="M216 4c5 5 3 9 0 10-3-1-5-5 0-10z" fill="#F2A33A"/>`, 'コースの予約') },
+  { p: -1.5, who: 'まお', t: '集合場所だけ決めて、あとは歩きながら気分で決めない？',
+    svg: SVGH('#E4F4EB', `<path d="M40 100C80 40 112 122 152 70S224 28 262 84" fill="none" stroke="#2FA36B" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+      <circle cx="40" cy="100" r="8" fill="#2FA36B"/><circle cx="40" cy="100" r="3" fill="#fff"/><text x="40" y="124" font-size="10" font-weight="700" fill="#1F6E48" text-anchor="middle">集合</text>
+      <g font-weight="900" fill="#7BC9A1" font-size="26"><text x="98" y="52" transform="rotate(-10 98 52)">?</text><text x="186" y="112" transform="rotate(8 186 112)">?</text><text x="226" y="46" transform="rotate(-6 226 46)">?</text></g>
+      <g transform="translate(262 40)"><circle r="18" fill="#fff" stroke="#9AD3B5" stroke-width="2"/><path d="M0-12L5 0 0 12-5 0z" fill="#E5533D" transform="rotate(35)"/><circle r="2" fill="#26242B"/></g>`, 'ノープランのおでかけ') },
+  { p: 1, who: 'ゆうき', t: '持ち物チェックリスト作ったから、前日までに全部そろえておいてね！',
+    svg: SVGH('#E6EEFB', `<g><rect x="30" y="10" width="112" height="112" rx="8" fill="#fff" stroke="#9DB4E6" stroke-width="2"/><rect x="66" y="4" width="40" height="14" rx="4" fill="#6F8FD8"/>
+      <g font-size="10.5" font-weight="700" fill="#2C3E8F"><text x="62" y="46">充電器</text><text x="62" y="70">身分証</text><text x="62" y="94">日焼け止め</text></g>
+      <g fill="none" stroke="#9DB4E6" stroke-width="2"><rect x="40" y="35" width="14" height="14" rx="3"/><rect x="40" y="59" width="14" height="14" rx="3"/><rect x="40" y="83" width="14" height="14" rx="3"/></g>
+      <g fill="none" stroke="#2FA36B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M43 42l4 4 8-9"/><path d="M43 66l4 4 8-9"/><path d="M43 90l4 4 8-9"/></g></g>
+      <rect x="178" y="48" width="92" height="68" rx="10" fill="#3A7BD5"/><path d="M208 48v-10a6 6 0 0 1 6-6h28a6 6 0 0 1 6 6v10" fill="none" stroke="#2A5CA8" stroke-width="5"/>
+      <rect x="196" y="48" width="6" height="68" fill="#2F66B8"/><rect x="246" y="48" width="6" height="68" fill="#2F66B8"/><rect x="214" y="70" width="22" height="16" rx="3" fill="#FFE29A"/>`, '持ち物チェックリスト') }
+];
 
 const R = {
   scale(q, el) { nScale(el, q); },
@@ -201,13 +227,12 @@ const R = {
       else inDet = false;
       wrap.classList.toggle('center', x === 50); wrap.classList.remove('untouched');
       read(x);
-      const st = Math.round(x / 10); if (st !== lastStep) { lastStep = st; if (!inDet) SND.tick(); }
-      setAns(q, (50 - x) / 50 * 3 * q.aPole, x, fx);
+            setAns(q, (50 - x) / 50 * 3 * q.aPole, x, fx);
     };
     inp.addEventListener('pointerdown', () => { if (!touched) { touched = true; commit(false); } });
     inp.addEventListener('keydown', () => { touched = true; });
     inp.addEventListener('input', () => { touched = true; commit(false); });
-    inp.addEventListener('change', () => { commit(false); hype(!q._hyped); q._hyped = true; });
+    inp.addEventListener('change', () => { commit(false); if (!q._fb) { q._fb = 1; SND.click(); } });
   },
 
   choice(q, el) {
@@ -223,15 +248,16 @@ const R = {
 
   photo(q, el) {
     const rows = [['back', '後列（段差の上）'], ['mid', '中列（立ち）'], ['front', '前列（しゃがみ）']]; const cen = [0, 1, 2, 1, 0];
-    el.innerHTML = `<div class="photo">${rows.map(([k, l], r) => `<div class="rowlbl">${l}</div><div class="prow ${k}">${[0, 1, 2, 3, 4].map(ci => `<button class="spot" data-r="${r}" data-c="${ci}" aria-label="${l}・左から${ci + 1}番目">👣</button>`).join('')}</div>`).join('')}<div class="cam">📷 カメラ</div><div class="flash"></div></div>`;
+    const person = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5" fill="#F28C38"/><path d="M3.5 22c0-5 3.8-8 8.5-8s8.5 3 8.5 8z" fill="#F28C38"/></svg>';
+    el.innerHTML = `<div class="photo">${rows.map(([k, l], r) => `<div class="rowlbl">${l}</div><div class="prow ${k}">${[0, 1, 2, 3, 4].map(ci => `<button class="spot" data-r="${r}" data-c="${ci}" aria-label="${l}・左から${ci + 1}番目">${person}</button>`).join('')}</div>`).join('')}<div class="cam">📷 カメラ</div><div class="flash"></div></div>`;
     const prev = ans[q.id] && ans[q.id].raw;
     el.querySelectorAll('.spot').forEach(s => {
       const r = +s.dataset.r, ci = +s.dataset.c;
-      if (prev && prev.r === r && prev.c === ci) { s.classList.add('sel'); s.textContent = '🙂'; }
+      if (prev && prev.r === r && prev.c === ci) s.classList.add('sel');
       s.onclick = () => {
-        el.querySelectorAll('.spot').forEach(x => { x.classList.remove('sel'); x.textContent = '👣'; });
-        s.classList.add('sel'); s.textContent = '🙂';
-        const f = el.querySelector('.flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); noise(.08, .2, 0, 4000);
+        el.querySelectorAll('.spot').forEach(x => x.classList.remove('sel'));
+        s.classList.add('sel');
+        const f = el.querySelector('.flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
         setAns(q, cen[ci] * 2 + r - 3, { r, c: ci });
       };
     });
@@ -257,11 +283,11 @@ const R = {
       const now = RM ? L - .001 : ((performance.now() - t0) / 1000) % L;
       cards.forEach(b => {
         const c = b.querySelector('canvas'), x = c.getContext('2d'), W = c.width, Hh = c.height; x.clearRect(0, 0, W, Hh);
-        x.setLineDash([3, 4]); x.strokeStyle = 'rgba(59,209,255,.35)'; x.lineWidth = 1;
-        H.forEach(h => { if (h <= now) { const p = h / L * W; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, Hh); x.stroke(); x.fillStyle = '#FFD23F'; x.beginPath(); x.arc(p, 5, 3, 0, 7); x.fill(); } });
-        x.setLineDash([]); x.strokeStyle = '#3BD1FF'; x.lineWidth = 2; x.shadowColor = '#3BD1FF'; x.shadowBlur = 6; x.beginPath();
+        x.setLineDash([3, 4]); x.strokeStyle = 'rgba(255,233,199,.35)'; x.lineWidth = 1;
+        H.forEach(h => { if (h <= now) { const p = h / L * W; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, Hh); x.stroke(); x.fillStyle = '#FFB454'; x.beginPath(); x.arc(p, 5, 3, 0, 7); x.fill(); } });
+        x.setLineDash([]); x.strokeStyle = '#FFD58A'; x.lineWidth = 2.2; x.beginPath();
         for (let p = 0; p <= now / L * W; p += 1.5) { const y = Hh / 2 - f[b.dataset.k](p / W * L) * 1.4; p ? x.lineTo(p, y) : x.moveTo(p, y); }
-        x.stroke(); x.shadowBlur = 0;
+        x.stroke();
       });
       if (!RM) rafs[0] = requestAnimationFrame(draw);
     };
@@ -327,7 +353,7 @@ const R = {
         const b = document.createElement('button'); b.className = 'pcard' + (m.req ? ' req' : ''); b.textContent = (m.req ? '【必須】' : '') + m.t;
         b.disabled = seq.includes(m.k) || seq.length >= 3 || (needEnd && !m.req);
         b.onclick = () => {
-          seq.push(m.k); tone(1200, .06, 'sine', .08); paint();
+          seq.push(m.k); SND.click(); paint();
           if (seq.length === 3) { const pos = seq.indexOf('end'); setAns(q, (pos === 0 ? 1 : pos === 2 ? -1 : 0) + seq.filter(k => k !== 'end').reduce((a, k) => a + msgs.find(x => x.k === k).p, 0), [...seq]); }
         };
         pick.appendChild(b);
@@ -355,42 +381,43 @@ const R = {
       el.style.position = 'relative';
       el.innerHTML = `<div class="timer"><div id="tb"></div></div>${cabin()}<div class="seatread" id="sread">空いている席をタップ！</div><button class="btn ghost sm anybtn" data-any="1">どこでもいい</button><div class="count" id="cnt"></div>`;
       const tb = el.querySelector('#tb'); if (tb.animate) tb.animate([{ width: '100%' }, { width: '0%' }], { duration: LIM * 1000, fill: 'forwards' });
-      const fin = v => { clearRun(); if (v === 'time') cutin('TIME UP', 'SEAT SCAN'); setAns(q, v === 'time' ? 0 : v === 'any' ? -1 : calc(v.r, v.c), v); doneView(); };
+      const fin = v => { clearRun(); if (v === 'time') toast('時間切れ（この問題は0点になります）'); setAns(q, v === 'time' ? 0 : v === 'any' ? -1 : calc(v.r, v.c), v); doneView(); };
       el.querySelectorAll('.cs:not(.taken)').forEach(b => b.onclick = () => { if (ans[q.id]) return; const r = +b.dataset.r, c = b.dataset.c; b.classList.add('sel'); el.querySelector('#sread').textContent = desc(r, c); clearRun(); timers.push(setTimeout(() => fin({ r, c }), 350)); });
       el.querySelector('[data-any]').onclick = () => fin('any');
-      for (let k = 3; k >= 1; k--) timers.push(setTimeout(() => { const n = el.querySelector('#cnt'); if (!n) return; n.textContent = k; n.classList.remove('go'); void n.offsetWidth; n.classList.add('go'); tone(660 + (3 - k) * 220, .15, 'square', .08); }, (LIM - k) * 1000));
+      for (let k = 3; k >= 1; k--) timers.push(setTimeout(() => { const n = el.querySelector('#cnt'); if (!n) return; n.textContent = k; n.classList.remove('go'); void n.offsetWidth; n.classList.add('go'); SND.beep(3 - k); }, (LIM - k) * 1000));
       timers.push(setTimeout(() => { if (!ans[q.id]) fin('time'); }, LIM * 1000));
     };
     ans[q.id] ? doneView() : startView();
   },
 
   swipe(q, el) {
-    const SEC = 5;
-    const cards = [{ t: '来月の連休、分刻みでおいしい店と観光地を巡る完璧な旅のしおり作ったよ！', p: 1, e: '🗺️', bg: '#FFF1D6' }, { t: '今日の夜、急に予定空いたからノープランでドライブ行かない？', p: -1, e: '🚗', bg: '#E3F1FB' }, { t: '気になってたお店、1ヶ月前から予約してコースも全部決めておいたよ！', p: 1, e: '🍽️', bg: '#FCE6EC' }];
+    const SEC = 5, cards = SWIPE_CARDS;
+    const labelOf = v => v === 1 ? 'アリ！' : v === -1 ? 'イマイチ' : '時間切れ';
     const doneView = () => {
       const r = ans[q.id].raw;
-      el.innerHTML = `<div class="done">${r.map((v, i) => `カード${i + 1}：${v === 1 ? 'アリ！' : v === -1 ? 'イマイチ' : '時間切れ'}`).join('<br>')}</div><div class="center" style="margin-top:10px"><button class="linkbtn">もう一度やる</button></div>`;
+      el.innerHTML = `<div class="done">${r.map((v, i) => `カード${i + 1}：${labelOf(v)}`).join('<br>')}</div><div class="center" style="margin-top:10px"><button class="linkbtn">もう一度やる</button></div>`;
       el.querySelector('.linkbtn').onclick = () => { unset(q); startView(); };
     };
-    const startView = () => focusIntro(el, '集中してね！', `カードが3枚、1枚${SEC}秒ずつ出てきます。<br>右（アリ）か左（イマイチ）に、直感でスワイプしてください。`, () => play(0, []));
+    const startView = () => focusIntro(el, '集中してね！', `カードが${cards.length}枚、1枚${SEC}秒ずつ出てきます。<br>右（アリ）か左（イマイチ）に、直感でスワイプしてください。`, () => play(0, []));
     const play = (i, res) => {
-      if (i >= cards.length) { clearRun(); setAns(q, res.reduce((a, v, k) => a + v * cards[k].p, 0), res); doneView(); return; }
+      if (i >= cards.length) { clearRun(); setAns(q, res.reduce((a, v, k) => a + v * cards[k].p, 0) / 2, res); doneView(); return; }
       const cd = cards[i];
-      el.innerHTML = `<div class="timer"><div id="tb"></div></div><div class="swipearea"><div class="scard"><div class="pic" style="background:${cd.bg}">${cd.e}</div><p></p><span class="mono" style="font-size:11px;color:var(--sub)">${i + 1} / 3</span></div></div><div class="swbtns"><button class="no">← イマイチ</button><button class="yes">アリ！ →</button></div>`;
-      el.querySelector('.scard p').textContent = cd.t;
+      el.innerHTML = `<div class="timer"><div id="tb"></div></div><div class="swipearea"><div class="scard">${cd.svg}<span class="cnt mono">${i + 1} / ${cards.length}</span><div class="stamp yes">アリ</div><div class="stamp no">イマイチ</div><div class="msg"><div class="who"></div><div class="bubble"></div></div></div></div><div class="swbtns"><button class="no">← イマイチ</button><button class="yes">アリ！ →</button></div>`;
+      el.querySelector('.who').textContent = cd.who; el.querySelector('.bubble').textContent = cd.t;
       const tb = el.querySelector('#tb'); if (tb.animate) tb.animate([{ width: '100%' }, { width: '0%' }], { duration: SEC * 1000, fill: 'forwards' });
-      let decided = false; const card = el.querySelector('.scard');
-      const decide = v => { if (decided) return; decided = true; clearRun(); if (v) { SND.pop(1); } card.style.transform = `translateX(${v * 420}px) rotate(${v * 20}deg)`; timers.push(setTimeout(() => play(i + 1, [...res, v]), v ? 260 : 0)); };
-      el.querySelector('.no').onclick = () => decide(-1); el.querySelector('.yes').onclick = () => decide(1);
+      let decided = false; const card = el.querySelector('.scard'), sy = card.querySelector('.stamp.yes'), sn = card.querySelector('.stamp.no');
+      const decide = v => { if (decided) return; decided = true; clearRun(); if (v) SND.click(); card.style.transform = `translateX(${v * 420}px) rotate(${v * 16}deg)`; timers.push(setTimeout(() => play(i + 1, [...res, v]), v ? 260 : 0)); };
+      el.querySelector('.swbtns .no').onclick = () => decide(-1); el.querySelector('.swbtns .yes').onclick = () => decide(1);
       let sx = null;
       card.onpointerdown = e => { sx = e.clientX; card.style.transition = 'none'; card.setPointerCapture(e.pointerId); };
-      card.onpointermove = e => { if (sx === null) return; const dx = e.clientX - sx; card.style.transform = `translateX(${dx}px) rotate(${dx / 15}deg)`; };
-      card.onpointerup = e => { if (sx === null) return; const dx = e.clientX - sx; sx = null; card.style.transition = ''; if (Math.abs(dx) > 80) decide(dx > 0 ? 1 : -1); else card.style.transform = ''; };
+      card.onpointermove = e => { if (sx === null) return; const dx = e.clientX - sx; card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`; sy.style.opacity = Math.max(0, Math.min(1, dx / 90)); sn.style.opacity = Math.max(0, Math.min(1, -dx / 90)); };
+      card.onpointerup = e => { if (sx === null) return; const dx = e.clientX - sx; sx = null; card.style.transition = ''; if (Math.abs(dx) > 80) decide(dx > 0 ? 1 : -1); else { card.style.transform = ''; sy.style.opacity = sn.style.opacity = 0; } };
       timers.push(setTimeout(() => decide(0), SEC * 1000));
     };
     ans[q.id] ? doneView() : startView();
   }
 };
+
 
 /* ================= 進行 ================= */
 function go(d) {
@@ -399,9 +426,8 @@ function go(d) {
   idx = n; render();
   if (d > 0) {
     const q = Q[n], L = Q.length;
-    const ms = { [Math.round(L * .25)]: ['25% CLEAR', 'PROGRESS'], [Math.round(L * .5)]: ['HALF WAY', 'PROGRESS 50%'], [Math.round(L * .75)]: ['75% CLEAR', 'PROGRESS'], [L - 3]: ['LAST 3', 'FINAL SCAN'] };
-    if (q.special && !ans[q.id]) cutin('SPECIAL STAGE', '◆ ' + q.special);
-    else if (ms[n]) cutin(ms[n][0], ms[n][1]);
+    const ms = { [Math.round(L * .25)]: ['約4分の1 クリア', 'いい調子です'], [Math.round(L * .5)]: ['折り返し地点', '半分まで来ました'], [L - 3]: ['ラスト3問', 'あと少し！'] };
+    if (ms[n] && !ans[q.id]) cutin(ms[n][0], ms[n][1]);
   }
 }
 $('#nextBtn').onclick = () => go(1);
@@ -421,7 +447,7 @@ function calc(A) {
   });
 }
 function finish() {
-  clearRun(); $('#combo').classList.remove('on');
+  clearRun();
   const r = calc(ans), code = r.map(x => x.letter).join('');
   recordStat(code, r);
   reveal(code, () => showResult(code, r));
@@ -431,25 +457,21 @@ function finish() {
 function reveal(code, done) {
   const rv = $('#reveal'), sl = $('#rvSlots'), msg = $('#rvMsg'), nm = $('#rvName');
   const t = TYPES[code], g = GROUPS[t.group];
-  rv.classList.add('show'); msg.textContent = 'SCANNING YOUR ROLE...'; nm.classList.remove('on'); nm.textContent = '';
+  rv.classList.add('show'); msg.textContent = 'あなたのロールを診断中…'; nm.classList.remove('on'); nm.textContent = '';
   if (RM) { setTimeout(() => { rv.classList.remove('show'); done(); }, 600); return; }
-  SND.scan();
   sl.innerHTML = [0, 1, 2, 3].map(() => '<div class="sl4">?</div>').join('');
   const boxes = [...sl.children], pool = 'ESTJINFP';
-  const spin = setInterval(() => { boxes.forEach(b => { if (!b.classList.contains('lock')) b.textContent = pool[Math.random() * 8 | 0]; }); SND.tick(); }, 60);
-  const lockColors = [AXES.EI.color, AXES.SN.color, AXES.TF.color, AXES.JP.color];
+  const spin = setInterval(() => { boxes.forEach(b => { if (!b.classList.contains('lock')) b.textContent = pool[Math.random() * 8 | 0]; }); }, 70);
+  const lockColors = [AXES.EI.color, AXES.SN.color, AXES.TF.color, g.color];
   [...code].forEach((ch, i) => setTimeout(() => {
-    const b = boxes[i]; b.style.setProperty('--lc', i === 3 ? g.color : lockColors[i]); b.classList.add('lock'); b.textContent = ch;
-    SND.slam(); shake(rv);
-    const fw = $('#rvFlash'); fw.classList.remove('go'); void fw.offsetWidth; fw.classList.add('go');
-    const bb = b.getBoundingClientRect(); burst(bb.left + bb.width / 2, bb.top + bb.height / 2, 30, 10);
+    const b = boxes[i]; b.style.setProperty('--lc', lockColors[i]); b.classList.add('lock'); b.textContent = ch;
+    SND.lock();
     if (i === 3) {
       clearInterval(spin);
-      boxes.forEach(x => x.style.setProperty('--lc', g.color));
-      msg.textContent = 'ROLE IDENTIFIED';
-      setTimeout(() => { SND.fanfare(); rain(200, [g.color, '#FFFFFF', '#3BD1FF', '#FFD23F']); nm.textContent = `${t.name}タイプ`; nm.classList.add('on'); setTimeout(() => { rv.classList.remove('show'); done(); }, 1500); }, 450);
+      msg.textContent = '診断完了';
+      setTimeout(() => { SND.fanfare(); rain(110, [g.color, '#FFFFFF', '#FFD98A', '#F28C38']); nm.textContent = `${t.name}タイプ`; nm.classList.add('on'); setTimeout(() => { rv.classList.remove('show'); done(); }, 1400); }, 400);
     }
-  }, 1300 + i * 700));
+  }, 1100 + i * 650));
 }
 
 /* 画像（フォールバック付き） */
@@ -462,21 +484,21 @@ function detailCards(code, inModal) {
   const t = TYPES[code];
   const partner = c => { const p = TYPES[c], gc = GROUPS[p.group].color; return `<button class="pbtn" data-type="${c}" style="--pc:${gc}"><img src="${p.img}" alt="" onerror="this.outerHTML='<span class=&quot;mini&quot;>${c}</span>'"><span><small>${c}</small>${p.name}タイプ</span></button>`; };
   return `
-    <div class="glass dcard wide"><h3><span class="mono">CHARACTER</span>性格・働き方の特徴</h3><p>${t.feature}</p></div>
-    <div class="glass dcard"><h3><span class="mono">STRENGTH</span>強み</h3><p>${t.strengths}</p></div>
-    <div class="glass dcard"><h3><span class="mono">WATCH OUT</span>弱み（気をつけたいところ）</h3><p>${t.weaknesses}</p></div>
-    <div class="glass dcard wide"><h3><span class="mono">CAREER HINT</span>就活のヒント</h3><dl><dt>向いていそうな職種の例</dt><dd>${t.jobs}</dd><dt>自己PRの切り口</dt><dd>「${t.pr}」を具体的なエピソードで話してみよう</dd></dl></div>
-    <div class="glass dcard"><h3><span class="mono">PARTNER</span>補い合えるタイプ</h3><div class="partners">${t.partners.map(partner).join('')}</div>${inModal ? '' : '<p style="font-size:12px;color:var(--sub);margin-top:8px">タップすると詳しく見られます</p>'}</div>
-    <div class="glass dcard"><h3><span class="mono">DESIGN</span>キャラクター造形の秘密</h3><p>${t.look}</p></div>`;
+    <div class="card dcard wide"><h3>性格・働き方の特徴</h3><p>${t.feature}</p></div>
+    <div class="card dcard"><h3>強み</h3><p>${t.strengths}</p></div>
+    <div class="card dcard"><h3>弱み（気をつけたいところ）</h3><p>${t.weaknesses}</p></div>
+    <div class="card dcard wide"><h3>就活のヒント</h3><dl><dt>向いていそうな職種の例</dt><dd>${t.jobs}</dd><dt>自己PRの切り口</dt><dd>「${t.pr}」を具体的なエピソードで話してみよう</dd></dl></div>
+    <div class="card dcard"><h3>補い合えるタイプ</h3><div class="partners">${t.partners.map(partner).join('')}</div>${inModal ? '' : '<p style="font-size:12px;color:var(--sub);margin-top:8px">タップすると詳しく見られます</p>'}</div>
+    <div class="card dcard"><h3>キャラクター造形の秘密</h3><p>${t.look}</p></div>`;
 }
 
 function showResult(code, r, isPreview) {
   const t = TYPES[code], g = GROUPS[t.group];
   lastResult = code;
   const sec = $('#s-result'); sec.dataset.group = t.group;
-  $('#rGroup').textContent = `${t.group} GROUP // ${g.label}`;
+  $('#rGroup').textContent = `${t.group}グループ｜${g.label}`;
   $('#rCode').textContent = code;
-  const ri = $('#rImg').parentNode; ri.innerHTML = imgHTML(code) + '<span class="ring" aria-hidden="true"></span>';
+  $('#rImgBox').innerHTML = imgHTML(code);
   $('#rYomi').textContent = t.yomi;
   $('#rName').textContent = `${t.name}タイプ`;
   $('#rCatch').textContent = t.catch;
@@ -496,10 +518,9 @@ function showResult(code, r, isPreview) {
 function openType(code) {
   const t = TYPES[code], g = GROUPS[t.group], m = $('#typeModal');
   m.dataset.group = t.group;
-  $('#modalBody').innerHTML = `<div class="m-head"><div class="m-img">${imgHTML(code)}</div><div><span class="gbadge">${t.group} GROUP // ${g.label}</span><div class="rcode mono">${code}</div><div class="r-yomi">${t.yomi}</div><div class="r-name">${t.name}タイプ</div><p class="r-catch">${t.catch}</p></div></div><div class="dgrid">${detailCards(code, true)}</div>`;
+  $('#modalBody').innerHTML = `<div class="m-head"><div class="m-img">${imgHTML(code)}</div><div><span class="gbadge">${t.group}グループ｜${g.label}</span><div class="rcode mono">${code}</div><div class="r-yomi">${t.yomi}</div><div class="r-name">${t.name}タイプ</div><p class="r-catch">${t.catch}</p></div></div><div class="dgrid">${detailCards(code, true)}</div>`;
   m.classList.add('show'); m.setAttribute('aria-hidden', 'false'); m.querySelector('.modal-box').scrollTop = 0;
-  SND.swoosh();
-}
+  }
 function closeModal() { const m = $('#typeModal'); m.classList.remove('show'); m.setAttribute('aria-hidden', 'true'); }
 $('#typeModal').addEventListener('click', e => { if (e.target.closest('[data-close]')) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); $('#confirmModal').classList.remove('show'); } });
@@ -509,7 +530,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-type
 function renderDex(f = 'ALL') {
   $('#dexGrid').innerHTML = TYPE_ORDER.filter(c => f === 'ALL' || TYPES[c].group === f).map(c => {
     const t = TYPES[c], gc = GROUPS[t.group].color;
-    return `<button class="glass dcell" data-type="${c}" style="--gc:${gc}"><div class="dimg">${imgHTML(c)}</div><div class="code">${c}</div><div class="nm">${t.name}タイプ</div><div class="cp">${t.catch}</div></button>`;
+    return `<button class="card dcell" data-type="${c}" style="--gc:${gc}"><div class="dimg">${imgHTML(c)}</div><div class="code">${c}</div><div class="nm">${t.name}タイプ</div><div class="cp">${t.catch}</div></button>`;
   }).join('');
 }
 $('#dexFilter').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $$('#dexFilter button').forEach(x => x.classList.toggle('on', x === b)); renderDex(b.dataset.f); });
@@ -559,7 +580,7 @@ $('#devCsv').onclick = () => {
 $('#devClear').onclick = () => { try { localStorage.removeItem(LS_KEY); } catch (e) {} renderStats(); toast('この端末の記録を消去しました'); };
 
 /* ================= トップ・開発用 ================= */
-$('#axesIntro').innerHTML = Object.entries(AXES).map(([k, a]) => `<div class="glass axcard" style="border-top-color:${a.color}"><span class="ax-l" style="color:${a.color}">${a.pos} / ${a.neg}</span><b>${a.label}</b><p>${a.pn}（${a.pos}）⇔ ${a.nn}（${a.neg}）<br>${a.desc}</p></div>`).join('');
+$('#axesIntro').innerHTML = Object.entries(AXES).map(([k, a]) => `<div class="card axcard"><span class="ax-l" style="background:${a.color}">${a.pos} / ${a.neg}</span><b>${a.label}</b><p>${a.pn}（${a.pos}）⇔ ${a.nn}（${a.neg}）<br>${a.desc}</p></div>`).join('');
 $('#devType').innerHTML = TYPE_ORDER.map(c => `<option value="${c}">${c}｜${TYPES[c].name}タイプ（${TYPES[c].group}）</option>`).join('');
 $('#devRandom').onclick = () => { resetQuiz(); Q.forEach(q => { ans[q.id] = { score: Math.floor(Math.random() * 7) - 3, raw: null }; }); current = 's-quiz'; finish(); };
 $('#devPreview').onclick = () => {
@@ -568,5 +589,8 @@ $('#devPreview').onclick = () => {
   reveal(code, () => showResult(code, fake, true));
 };
 
+const setHdr = () => document.documentElement.style.setProperty('--hdr', $('#hdr').offsetHeight + 'px');
+setHdr(); addEventListener('resize', setHdr); addEventListener('load', setHdr);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(setHdr);
 renderDex();
 })();

@@ -4,16 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NEXT ROLE 16 ｜ 大学生活のあるあるでわかる、あなたの「働き方」診断</title>
-<meta name="description" content="全41問・約10分。ゼミ・バイト・就活の場面から、4つの軸で16の役割（ロール）をスキャンする自己理解のための診断です。">
+<meta name="description" content="全41問・約10分。ゼミ・バイト・就活の場面から、4つの軸で16の役割（ロール）がわかる自己理解のための診断です。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="bg-grid" aria-hidden="true"></div>
 
-<header class="hdr">
+<header class="hdr" id="hdr">
   <button class="logo" id="logoBtn" aria-label="トップへ">
     <span class="dots"><i style="background:var(--ei)"></i><i style="background:var(--sn)"></i><i style="background:var(--tf)"></i><i style="background:var(--jp)"></i></span>
     <span class="logo-t">NEXT ROLE <b>16</b></span>
@@ -36,35 +35,34 @@
   <!-- ① TOP -->
   <section class="screen active" id="s-top">
     <div class="hero">
-      <span class="hud-badge"><i></i>NEXT GENERATION CAREER SCAN</span>
+      <span class="tag">大学生のための 働き方診断</span>
       <h1>大学生活のあるあるで、<br>あなたの<em>「働き方」</em>がわかる。</h1>
-      <p class="lead">全41問・約10分。ゼミ・バイト・就活の場面から、<br class="pc">4つの軸で16の役割（ロール）をスキャンします。</p>
+      <p class="lead">全41問・約10分。ゼミ・バイト・就活の場面から、<br>4つの軸で16の役割（ロール）に分けます。</p>
       <div class="hero-img">
         <img src="assets/chars/00_group.webp" alt="16タイプのキャラクター集合" onerror="this.parentNode.classList.add('noimg')">
-        <span class="scanline" aria-hidden="true"></span>
       </div>
       <div class="cta">
-        <button class="btn glow" id="startBtn">スキャン（診断）をはじめる</button>
+        <button class="btn main" id="startBtn">診断をはじめる</button>
         <button class="btn ghost" data-go="s-dex">16タイプ図鑑を見る</button>
       </div>
     </div>
 
-    <h2 class="sec-h"><span>01</span>4つの分析軸</h2>
+    <h2 class="sec-h">4つの分析軸</h2>
     <div class="axes4" id="axesIntro"></div>
 
-    <h2 class="sec-h"><span>02</span>この診断の特徴</h2>
+    <h2 class="sec-h">この診断の特徴</h2>
     <div class="feat">
-      <div class="glass"><b>大学生のリアルな場面</b><p>ゼミ・バイト・就活・サークルなど、身近な「あるある」で答えられます。</p></div>
-      <div class="glass"><b>7種のインタラクティブ問題</b><p>集合写真・波形・たこ焼き・飛行機の席など、言葉に頼らず直感で答える問題を収録。</p></div>
-      <div class="glass"><b>心理学研究をヒントに設計</b><p>ユングのタイプ論や、席の位置・刺激への反応に関する研究を手がかりに設問を作りました。</p></div>
+      <div class="card"><b>① 大学生のリアルな場面</b><p>ゼミ・バイト・就活・サークルなど、身近な「あるある」で答えられます。</p></div>
+      <div class="card"><b>② 言葉に頼らない7種の特殊問題</b><p>集合写真・波形・たこ焼き・飛行機の席など、直感で答える問題を入れています。</p></div>
+      <div class="card"><b>③ 心理学の研究をヒントに設計</b><p>ユングのタイプ論や、席の位置・刺激への反応に関する研究を手がかりに設問を作りました。</p></div>
     </div>
 
-    <div class="glass stats-teaser">
-      <div><b>みんなの結果</b><p>これまでに診断した人のタイプ分布を見られます。</p></div>
+    <div class="card stats-teaser">
+      <div><b>みんなの結果</b><p>これまでに診断した人のタイプの割合を見られます。</p></div>
       <button class="btn ghost sm" data-go="s-stats">見てみる</button>
     </div>
 
-    <div class="devbox glass">
+    <div class="card devbox">
       <b>開発用ショートカット</b>
       <button class="btn ghost sm" id="devRandom">【開発用】ランダムに全問回答して結果へ</button>
       <div class="devrow"><select id="devType"></select><button class="btn ghost sm" id="devPreview">このタイプの結果を表示</button></div>
@@ -78,7 +76,7 @@
       <div class="progress"><div id="pbar"></div></div>
       <div class="pmeta"><span id="pnum" class="mono"></span><span id="pstage"></span></div>
     </div>
-    <div class="qcard glass" id="qcard"></div>
+    <div class="qcard card" id="qcard"></div>
     <div class="qnav">
       <button class="btn ghost" id="backBtn">戻る</button>
       <button class="btn" id="nextBtn">次へ</button>
@@ -86,16 +84,16 @@
   </section>
 
   <!-- ③ RESULT -->
-  <section class="screen themed" id="s-result">
+  <section class="screen" id="s-result">
     <div class="r-hero">
       <div class="gbadge" id="rGroup"></div>
-      <div class="rcode mono" id="rCode"></div>
-      <div class="r-img"><img id="rImg" alt=""><span class="ring" aria-hidden="true"></span></div>
+      <div class="rcode" id="rCode"></div>
+      <div class="r-img" id="rImgBox"></div>
       <div class="r-yomi" id="rYomi"></div>
       <h1 class="r-name" id="rName"></h1>
       <p class="r-catch" id="rCatch"></p>
     </div>
-    <div class="glass bars" id="rBars"></div>
+    <div class="card bars" id="rBars"></div>
     <div class="dgrid" id="rDetail"></div>
     <div class="disc">この診断は自己理解のヒントです。能力や適性を判定するものではありません。</div>
     <div class="r-actions">
@@ -109,7 +107,7 @@
 
   <!-- ④ DEX -->
   <section class="screen" id="s-dex">
-    <h1 class="page-h"><span class="mono">TYPE INDEX</span>16タイプ図鑑</h1>
+    <h1 class="page-h">16タイプ図鑑</h1>
     <div class="filters" id="dexFilter">
       <button data-f="ALL" class="on">ALL</button>
       <button data-f="NT" style="--c:#3852A8">NT 青</button>
@@ -122,29 +120,29 @@
 
   <!-- STATS -->
   <section class="screen" id="s-stats">
-    <h1 class="page-h"><span class="mono">LIVE DATA</span>みんなの結果</h1>
+    <h1 class="page-h">みんなの結果</h1>
     <p class="lead-s" id="statsNote"></p>
-    <div class="glass stat-sum" id="statSum"></div>
-    <h2 class="sec-h"><span>A</span>タイプ別の割合</h2>
-    <div class="glass" id="statTypes"></div>
-    <h2 class="sec-h"><span>B</span>グループ別の割合</h2>
-    <div class="glass" id="statGroups"></div>
-    <h2 class="sec-h"><span>C</span>軸ごとの傾向</h2>
-    <div class="glass" id="statAxes"></div>
-    <div class="devbox glass"><b>開発用</b><button class="btn ghost sm" id="devCsv">この端末の記録をCSVで保存</button><button class="btn ghost sm" id="devClear">この端末の記録を消去</button></div>
+    <div class="card stat-sum" id="statSum"></div>
+    <h2 class="sec-h">タイプ別の割合</h2>
+    <div class="card" id="statTypes"></div>
+    <h2 class="sec-h">グループ別の割合</h2>
+    <div class="card" id="statGroups"></div>
+    <h2 class="sec-h">軸ごとの傾向</h2>
+    <div class="card" id="statAxes"></div>
+    <div class="card devbox"><b>開発用</b><button class="btn ghost sm" id="devCsv">この端末の記録をCSVで保存</button><button class="btn ghost sm" id="devClear">この端末の記録を消去</button></div>
   </section>
 
   <!-- ⑤ ABOUT -->
   <section class="screen" id="s-about">
-    <h1 class="page-h"><span class="mono">ABOUT</span>この診断について</h1>
+    <h1 class="page-h">この診断について</h1>
 
-    <div class="glass art">
+    <div class="card art">
       <h2>1. 背景と目的</h2>
       <p>就職活動の自己分析では「自分の強みが言葉にできない」「何から考えればいいかわからない」と悩む大学生が少なくありません。NEXT ROLE 16 は、ゼミ・バイト・就活といった大学生活の身近な場面に答えるだけで、自分の「働き方」の傾向をつかむきっかけをつくることを目的にしています。</p>
       <p>結果は「向いている・向いていない」を決めるものではなく、自己PRや職種研究の<strong>切り口</strong>を見つけるためのヒントとして設計しました。大学と地域の企業が学生の成長を支える、名護市の産学連携・人材育成の取り組みにもつなげられる形を目指しています。</p>
     </div>
 
-    <div class="glass art">
+    <div class="card art">
       <h2>2. デザイン・UIの必然性</h2>
       <h3>なぜ「左＝そう思わない／右＝そう思う」なのか</h3>
       <p>横書きの文章を読む流れ（左→右）と、「否定→肯定」の順番をそろえることで、迷わず答えられるようにしました。全問で向きを統一しています。</p>
@@ -164,7 +162,7 @@
       <p class="small">※これらの研究は設問づくりの手がかりとして参考にしたもので、本診断そのものの精度が学術的に検証されているわけではありません。</p>
     </div>
 
-    <div class="glass art">
+    <div class="card art">
       <h2>3. AI活用とチームによる意思決定の記録</h2>
       <p>プロトタイプ（試作品）づくりにはAIを使いましたが、実際の機械で試し、チームで話し合って、どこを直すかを人の判断で決めました。主な改善点は次のとおりです。</p>
       <div class="tblwrap"><table class="log">
@@ -172,16 +170,17 @@
         <tbody>
           <tr><td>回答の進み方</td><td>選ぶと自動で次へ</td><td>「次へ」ボタンで進む</td><td>「次へ」＋戻って変更可</td><td>誤タップで先に進んでしまう声が多かった</td></tr>
           <tr><td>飛行機の席</td><td>5秒・簡単な図</td><td>10秒・実際の機内図</td><td>10秒・時間切れは中立（0点）</td><td>焦って時間切れになった人が不利にならないように</td></tr>
-          <tr><td>スワイプ問題</td><td>—</td><td>1枚3秒</td><td>1枚5秒＋開始前の「集中」案内</td><td>3秒では文章を読み切れなかった</td></tr>
+          <tr><td>スワイプ問題</td><td>—</td><td>3枚・1枚3秒</td><td>5枚・1枚5秒・イラスト化・開始前に「集中」案内</td><td>3秒では文章を読み切れず、3枚だと1枚の影響が大きくてぶれやすかった</td></tr>
           <tr><td>スライダー</td><td>—</td><td>触らないと未回答</td><td>触った時点で回答・中央で軽く止まる</td><td>「どちらとも言えない」が選べなかった</td></tr>
           <tr><td>ものの見方（S/N）の設問</td><td>「現実的」「直感」など直接的な言葉</td><td>日常場面に言い換え</td><td>具体⇔全体像の問いを追加・左右を入れ替え</td><td>冒険好きかどうかを測ってしまう設問があった</td></tr>
-          <tr><td>演出</td><td>なし</td><td>効果音・紙吹雪・COMBO</td><td>近未来スキャン調に整理</td><td>楽しさは残しつつ、診断としての信頼感を出すため</td></tr>
+          <tr><td>演出</td><td>なし</td><td>効果音・紙吹雪・COMBO</td><td>COMBOを廃止・全画面演出は3回だけ・音を小さく</td><td>「うるさすぎる」と感じ、診断に集中しにくかった</td></tr>
+          <tr><td>見た目</td><td>—</td><td>近未来風（発光・すりガラス）</td><td>あたたかい紙もの風に変更</td><td>「AIっぽい」と感じ、大学生が親しみやすい雰囲気にするため</td></tr>
           <tr><td>言葉づかい</td><td>シラバス・合意・貢献度など</td><td>—</td><td>日常の言葉に言い換え</td><td>初めての人でも読み飛ばさずに答えられるように</td></tr>
         </tbody>
       </table></div>
     </div>
 
-    <div class="glass art">
+    <div class="card art">
       <h2>4. クレジット・免責事項</h2>
       <p>制作：名桜大学「健康情報演習II（PBL）」制作チーム</p>
       <p>本診断はユングのタイプ論をもとにしたオリジナルの診断です。既存の商用性格検査やそのタイプ名・イラストとは関係ありません。</p>
@@ -192,13 +191,13 @@
 
 <footer class="ftr">
   <p>この診断は自己理解のヒントです。能力や適性を判定するものではありません。</p>
-  <p class="mono">NEXT ROLE 16 — 名桜大学 健康情報演習II（PBL）</p>
+  <p>NEXT ROLE 16 — 名桜大学 健康情報演習II（PBL）</p>
 </footer>
 
 <!-- モーダル（タイプ詳細） -->
-<div class="modal themed" id="typeModal" aria-hidden="true">
+<div class="modal" id="typeModal" aria-hidden="true">
   <div class="modal-bg" data-close></div>
-  <div class="modal-box glass" role="dialog" aria-modal="true">
+  <div class="modal-box" role="dialog" aria-modal="true">
     <button class="mclose" data-close aria-label="閉じる">×</button>
     <div id="modalBody"></div>
   </div>
@@ -207,7 +206,7 @@
 <!-- 確認ダイアログ -->
 <div class="modal" id="confirmModal" aria-hidden="true">
   <div class="modal-bg"></div>
-  <div class="modal-box glass small" role="alertdialog" aria-modal="true">
+  <div class="modal-box small" role="alertdialog" aria-modal="true">
     <p class="cf-t">診断の途中です</p>
     <p class="cf-m">ここで移動すると、これまでの回答は消えてしまいます。移動しますか？</p>
     <div class="cf-btns"><button class="btn ghost" id="cfNo">診断を続ける</button><button class="btn" id="cfYes">移動する</button></div>
@@ -216,11 +215,9 @@
 
 <!-- 演出 -->
 <canvas id="fx" aria-hidden="true"></canvas>
-<div id="cutin" aria-hidden="true"><div class="ci-band"><span class="ci-sub mono" id="ciSub"></span><b id="ciMain"></b></div></div>
-<div class="combo mono" id="combo"></div>
+<div id="cutin" aria-hidden="true"><div class="ci-band"><span class="ci-sub" id="ciSub"></span><b id="ciMain"></b></div></div>
 <div id="reveal" aria-live="polite">
-  <div class="rv-grid"></div>
-  <div class="rv-msg mono" id="rvMsg">SCANNING YOUR ROLE...</div>
+  <div class="rv-msg" id="rvMsg">診断中…</div>
   <div class="rv-slots" id="rvSlots"></div>
   <div class="rv-name" id="rvName"></div>
   <div class="rv-flash" id="rvFlash"></div>
