@@ -54,7 +54,12 @@ function ac() {
   return AC;
 }
 document.addEventListener('pointerdown', () => ac(), true);
-$('#muteBtn').onclick = () => { muted = !muted; $('#muteBtn').textContent = muted ? '🔇' : '🔊'; };
+const ICON_ON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+const paintMute = () => { const b = $('#muteBtn'); b.innerHTML = muted ? ICON_OFF : ICON_ON; b.setAttribute('aria-pressed', muted); b.setAttribute('aria-label', muted ? '音を出す' : '音を消す'); };
+paintMute();
+$('#muteBtn').onclick = () => { muted = !muted; paintMute(); };
+if (/[?&#]dev\b/.test(location.href)) document.body.classList.add('devmode');
 function tone(f, d = .1, type = 'sine', vol = .05, slide = 0, at = 0) {
   const a = ac(); if (!a || muted) return;
   const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
@@ -580,7 +585,7 @@ $('#devCsv').onclick = () => {
 $('#devClear').onclick = () => { try { localStorage.removeItem(LS_KEY); } catch (e) {} renderStats(); toast('この端末の記録を消去しました'); };
 
 /* ================= トップ・開発用 ================= */
-$('#axesIntro').innerHTML = Object.entries(AXES).map(([k, a]) => `<div class="card axcard"><span class="ax-l" style="background:${a.color}">${a.pos} / ${a.neg}</span><b>${a.label}</b><p>${a.pn}（${a.pos}）⇔ ${a.nn}（${a.neg}）<br>${a.desc}</p></div>`).join('');
+$('#axesIntro').innerHTML = Object.entries(AXES).map(([k, a]) => `<li style="--c:${a.color}"><span class="ax-code">${a.pos}<i>/</i>${a.neg}</span><div><b>${a.label}</b><span class="ax-poles">${a.pn}（${a.pos}）<i class="ax-bar" aria-hidden="true"></i>${a.nn}（${a.neg}）</span><p>${a.desc}</p></div></li>`).join('');
 $('#devType').innerHTML = TYPE_ORDER.map(c => `<option value="${c}">${c}｜${TYPES[c].name}タイプ（${TYPES[c].group}）</option>`).join('');
 $('#devRandom').onclick = () => { resetQuiz(); Q.forEach(q => { ans[q.id] = { score: Math.floor(Math.random() * 7) - 3, raw: null }; }); current = 's-quiz'; finish(); };
 $('#devPreview').onclick = () => {

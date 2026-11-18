@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NEXT ROLE 16 ｜ 大学生活のあるあるでわかる、あなたの「働き方」診断</title>
 <meta name="description" content="全41問・約10分。ゼミ・バイト・就活の場面から、4つの軸で16の役割（ロール）がわかる自己理解のための診断です。">
+<meta name="theme-color" content="#FBF8F3">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23FBF8F3'/%3E%3Ccircle cx='10' cy='10' r='5.5' fill='%23F28C38'/%3E%3Ccircle cx='22' cy='10' r='5.5' fill='%232FA36B'/%3E%3Ccircle cx='10' cy='22' r='5.5' fill='%233A7BD5'/%3E%3Ccircle cx='22' cy='22' r='5.5' fill='%238E5CD9'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="NEXT ROLE 16 ｜ あなたの「働き方」診断">
+<meta property="og:description" content="大学生活のあるあるで、16の役割（ロール）のどれに近いかがわかる。全41問・約10分。">
+<meta property="og:url" content="https://aogiri118.github.io/next-role-16/">
+<meta property="og:image" content="https://aogiri118.github.io/next-role-16/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
@@ -25,7 +34,7 @@
     <button data-go="s-about">この診断について</button>
   </nav>
   <div class="util">
-    <button class="ubtn" id="muteBtn" aria-label="音のオン・オフ">🔊</button>
+    <button class="ubtn ico" id="muteBtn" aria-label="音を消す" aria-pressed="false"></button>
     <button class="ubtn dev-t" id="devToggle">開発メモ：OFF</button>
   </div>
 </header>
@@ -35,39 +44,50 @@
   <!-- ① TOP -->
   <section class="screen active" id="s-top">
     <div class="hero">
-      <span class="tag">大学生のための 働き方診断</span>
-      <h1>大学生活のあるあるで、<br>あなたの<em>「働き方」</em>がわかる。</h1>
-      <p class="lead">全41問・約10分。ゼミ・バイト・就活の場面から、<br>4つの軸で16の役割（ロール）に分けます。</p>
-      <div class="hero-img">
-        <img src="assets/chars/00_group.webp" alt="16タイプのキャラクター集合" onerror="this.parentNode.classList.add('noimg')">
+      <div class="hero-txt">
+        <p class="eyebrow">名桜祭 PBL展示 ／ 大学生のための働き方診断</p>
+        <h1><span class="nb">大学生活の</span><span class="nb">あるあるで、</span><br><span class="nb">あなたの<em>「働き方」</em>が</span><span class="nb">わかる。</span></h1>
+        <p class="lead">ゼミ・バイト・就活の場面に答えていくと、4つの軸から、16の役割（ロール）のどれに近いかがわかります。</p>
+        <div class="cta">
+          <button class="btn main" id="startBtn">診断をはじめる</button>
+          <button class="linkbtn" data-go="s-dex">先に16タイプを見る →</button>
+        </div>
+        <ul class="meta"><li>全41問</li><li>約10分</li><li>登録・個人情報なし</li></ul>
       </div>
-      <div class="cta">
-        <button class="btn main" id="startBtn">診断をはじめる</button>
-        <button class="btn ghost" data-go="s-dex">16タイプ図鑑を見る</button>
+      <figure class="hero-img">
+        <img src="assets/chars/00_group.webp" width="1600" height="1933" alt="16タイプのキャラクターの集合イラスト" onerror="this.parentNode.classList.add('noimg')">
+      </figure>
+    </div>
+
+    <section class="block">
+      <div class="block-h">
+        <h2>4つの軸で、<br>あなたを見ていきます</h2>
+        <p>どちらが良い・悪いではありません。どちら寄りかを見るだけです。</p>
       </div>
-    </div>
+      <ol class="axlist" id="axesIntro"></ol>
+    </section>
 
-    <h2 class="sec-h">4つの分析軸</h2>
-    <div class="axes4" id="axesIntro"></div>
+    <section class="block">
+      <div class="block-h">
+        <h2>ふつうの診断と、<br>ここがちがう</h2>
+      </div>
+      <ol class="points">
+        <li><b>大学生の「あるある」だけで聞きます</b><p>ゼミ・バイト・就活・サークルなど、ふだんの場面を思い浮かべて答えられます。</p></li>
+        <li><b>文字を読まずに答える問題が7つ</b><p>集合写真で立つ位置、たこ焼きの取り方、飛行機の席など、直感で選ぶ問題を入れました。</p></li>
+        <li><b>心理学の研究をヒントにしています</b><p>ユングのタイプ論や、席の位置と性格の関係などの研究を手がかりに、設問を作りました。</p></li>
+      </ol>
+    </section>
 
-    <h2 class="sec-h">この診断の特徴</h2>
-    <div class="feat">
-      <div class="card"><b>① 大学生のリアルな場面</b><p>ゼミ・バイト・就活・サークルなど、身近な「あるある」で答えられます。</p></div>
-      <div class="card"><b>② 言葉に頼らない7種の特殊問題</b><p>集合写真・波形・たこ焼き・飛行機の席など、直感で答える問題を入れています。</p></div>
-      <div class="card"><b>③ 心理学の研究をヒントに設計</b><p>ユングのタイプ論や、席の位置・刺激への反応に関する研究を手がかりに設問を作りました。</p></div>
-    </div>
-
-    <div class="card stats-teaser">
-      <div><b>みんなの結果</b><p>これまでに診断した人のタイプの割合を見られます。</p></div>
-      <button class="btn ghost sm" data-go="s-stats">見てみる</button>
-    </div>
+    <button class="teaser" data-go="s-stats">
+      <span><b>ほかの人は、どのタイプが多い？</b><small>これまでに診断した人の割合を見られます</small></span>
+      <span class="arrow" aria-hidden="true">→</span>
+    </button>
 
     <div class="card devbox">
       <b>開発用ショートカット</b>
       <button class="btn ghost sm" id="devRandom">【開発用】ランダムに全問回答して結果へ</button>
       <div class="devrow"><select id="devType"></select><button class="btn ghost sm" id="devPreview">このタイプの結果を表示</button></div>
     </div>
-    <p class="disc-s">この診断は自己理解のヒントです。能力や適性を判定するものではありません。</p>
   </section>
 
   <!-- ② QUIZ -->
@@ -109,7 +129,7 @@
   <section class="screen" id="s-dex">
     <h1 class="page-h">16タイプ図鑑</h1>
     <div class="filters" id="dexFilter">
-      <button data-f="ALL" class="on">ALL</button>
+      <button data-f="ALL" class="on">すべて</button>
       <button data-f="NT" style="--c:#3852A8">NT 青</button>
       <button data-f="NF" style="--c:#2D7A4B">NF 緑</button>
       <button data-f="SJ" style="--c:#C2442C">SJ 赤</button>
